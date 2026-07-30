@@ -8,3 +8,7 @@
 [![Build Status](http://72.62.47.120:8080/job/instavote/job/worker-test/badge/icon?subject=UnitTest)](http://72.62.47.120:8080/job/instavote/job/worker-test/)
 
 added branch protection. 
+
+added pull branch.
+
+added another update to the readme with pull. 
