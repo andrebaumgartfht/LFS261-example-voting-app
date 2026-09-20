@@ -24,7 +24,7 @@ pipeline {
         }
         stage('package') {
             steps {
-                echo 'packaging worker app into a jar file'
+                echo 'packaging worker app into a jar file - watching'
                 dir('worker') {
                     sh 'mvn package -DskipTests'
                     archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
