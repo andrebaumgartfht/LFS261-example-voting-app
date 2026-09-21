@@ -12,3 +12,5 @@ added branch protection.
 added pull branch.
 
 added another update to the readme with pull. 
+
+added jenkingsfile
