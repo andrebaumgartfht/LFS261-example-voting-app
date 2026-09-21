@@ -31,14 +31,16 @@ pipeline {
                 }
             }
         }
-        stage('docker-package'){
+        stage('docker-package') {
             agent any
-            steps{
+            steps {
                 echo 'Packaging worker app with docker'
-                script{
-                    docker.withRegistry('https://index.docker.io/v1/','dockerlogin') { def workerImage = docker.build("30081974/worker:v${env.BUILD_ID}", "./worker")
-                    workerImage.push()
-                    workerImage.push("latest")
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerlogin') {
+                        def workerImage = docker.build("30081974/worker:v${env.BUILD_ID}", "./worker")
+                        workerImage.push()
+                        workerImage.push("latest")
+                    }
                 }
             }
         }
