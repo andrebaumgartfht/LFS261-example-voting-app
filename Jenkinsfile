@@ -44,7 +44,7 @@ pipeline {
           agent any
          
           steps{
-            echo 'Packaging wvoteorker app with docker'
+            echo 'Packaging worker app with docker'
             script{
               docker.withRegistry('https://index.docker.io/v1/', 'dockerlogin') {
                   // ./vote is the path to the Dockerfile that Jenkins will find from the Github repo
