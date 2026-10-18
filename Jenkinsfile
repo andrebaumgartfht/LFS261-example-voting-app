@@ -3,7 +3,120 @@ pipeline {
   agent none
 
   stages{
-      stage("build"){
+      stage('vote-build'){ 
+            agent{
+                docker{
+                    image 'python:3.11-slim'
+                    args '--user root'
+                    }
+                    }
+
+            steps{ 
+                echo 'Compiling vote app.' 
+                dir('vote'){
+            
+                        sh "pip install -r requirements.txt"
+
+                } 
+            } 
+        } 
+        stage('vote-test'){ 
+           
+            agent {
+                docker{
+                    image 'python:3.11-slim'
+                    args '--user root'
+                    }
+                    }
+            steps{ 
+                echo 'Running Unit Tests on vote app.' 
+                dir('vote'){ 
+                   
+                        sh "pip install -r requirements.txt"
+                        sh 'nosetests -v'
+                        
+                        
+                } 
+            } 
+        } 
+
+      stage('vote-docker-package'){
+          agent any
+         
+          steps{
+            echo 'Packaging wvoteorker app with docker'
+            script{
+              docker.withRegistry('https://index.docker.io/v1/', 'dockerlogin') {
+                  // ./vote is the path to the Dockerfile that Jenkins will find from the Github repo
+                  def voteImage = docker.build("xxxx/vote:v${env.BUILD_ID}", "./vote")
+                  voteImage.push()
+                  voteImage.push("${env.BRANCH_NAME}")
+                  voteImage.push("latest")
+              }
+            }
+          }
+      }
+
+    stage('result-build') {
+      agent {
+        docker {
+          image 'node:22.4.0-alpine'
+        }
+
+      }
+      when {
+        changeset '**/result/**'
+      }
+      steps {
+        echo 'Compiling result app..'
+        dir(path: 'result') {
+          sh 'npm install'
+        }
+
+      }
+    }
+
+    stage('result-test') {
+      agent {
+        docker {
+          image 'node:22.4.0-alpine'
+        }
+
+      }
+      when {
+        changeset '**/result/**'
+      }
+      steps {
+        echo 'Running Unit Tests on result app..'
+        dir(path: 'result') {
+          sh 'npm install'
+          sh 'npm test'
+        }
+
+      }
+    }
+
+    stage('result-docker-package') {
+      agent any
+      when {
+        changeset '**/result/**'
+        branch 'master'
+      }
+      steps {
+        echo 'Packaging result app with docker'
+        script {
+          docker.withRegistry('https://index.docker.io/v1/', 'dockerlogin') {
+            def resultImage = docker.build("xxxxx/result:v${env.BUILD_ID}", './result')
+            resultImage.push()
+            resultImage.push("${env.BRANCH_NAME}")
+            resultImage.push('latest')
+          }
+        }
+      }
+    }
+
+
+      stage("worker-build"){
         when{
             changeset "**/worker/**"
           }
@@ -22,7 +135,7 @@ pipeline {
           }
         }
       }
-      stage("test"){
+      stage("worker-test"){
         when{
           changeset "**/worker/**"
         }
@@ -40,7 +153,7 @@ pipeline {
 
           }
       }
-      stage("package"){
+      stage("worker-package"){
         when{
           branch 'master'
           changeset "**/worker/**"
@@ -61,7 +174,7 @@ pipeline {
         }
       }
 
-      stage('docker-package'){
+      stage('worker-docker-package'){
           agent any
           when{
             changeset "**/worker/**"
@@ -79,11 +192,22 @@ pipeline {
             }
           }
       }
+
+      stage('deploy to dev') {
+      agent any
+      when {
+        branch 'master'
+      }
+      steps {
+        echo 'Deploy instavote app with docker compose'
+        sh 'docker-compose up -d'
+      }
+    }
   }
 
   post{
     always{
-        echo 'Building multibranch pipeline for worker is completed..'
+        echo 'Building multibranch pipeline for voting app is completed..'
     }
   }
 }
